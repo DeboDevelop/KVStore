@@ -42,24 +42,22 @@ var checkingDir = function (file_path) {
 };
 exports.checkingDir = checkingDir;
 var createFiles = function (obj, file_name) {
-    var size = 0;
     try {
         //Reading the file(Shard) if they exist
         var file_p = path.join(obj.file_path, obj.name, file_name + ".json");
         var value = fs.readFileSync(file_p, "utf8");
-        size += Buffer.byteLength(JSON.stringify(value)) + Buffer.byteLength(file_name + ".json");
+        obj.size += Buffer.byteLength(JSON.stringify(value)) + Buffer.byteLength(file_name + ".json");
     }
     catch (e) {
         if (e.code == "ENOENT") {
             //Creating the file(Shard) if they doesn't exist
             var file_p = path.join(obj.file_path, obj.name, file_name + ".json");
             fs.writeFileSync(file_p, "{}", "utf8");
-            size += Buffer.byteLength("{}") + Buffer.byteLength(file_name + ".json");
+            obj.size += Buffer.byteLength("{}") + Buffer.byteLength(file_name + ".json");
         }
         else
             throw e;
         //Throwing the error to stop the creation of Database
     }
-    return size;
 };
 exports.createFiles = createFiles;

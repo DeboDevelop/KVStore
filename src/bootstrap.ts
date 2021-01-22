@@ -4,6 +4,7 @@ const path = require("path");
 interface KVStore {
     name: string;
     file_path: string;
+    size: number;
 }
 
 export const creatingDir = function (obj: KVStore): void {
@@ -37,21 +38,19 @@ export const checkingDir = function (file_path: string): string {
     }
 };
 
-export const createFiles = function (obj: KVStore, file_name: number): number {
-    let size = 0;
+export const createFiles = function (obj: KVStore, file_name: number): void {
     try {
         //Reading the file(Shard) if they exist
         let file_p = path.join(obj.file_path, obj.name, `${file_name}.json`);
         let value = fs.readFileSync(file_p, "utf8");
-        size += Buffer.byteLength(JSON.stringify(value)) + Buffer.byteLength(`${file_name}.json`);
+        obj.size += Buffer.byteLength(JSON.stringify(value)) + Buffer.byteLength(`${file_name}.json`);
     } catch (e) {
         if (e.code == "ENOENT") {
             //Creating the file(Shard) if they doesn't exist
             let file_p = path.join(obj.file_path, obj.name, `${file_name}.json`);
             fs.writeFileSync(file_p, "{}", "utf8");
-            size += Buffer.byteLength("{}") + Buffer.byteLength(`${file_name}.json`);
+            obj.size += Buffer.byteLength("{}") + Buffer.byteLength(`${file_name}.json`);
         } else throw e;
         //Throwing the error to stop the creation of Database
     }
-    return size;
 };
