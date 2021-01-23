@@ -34,6 +34,16 @@ function sleepProcessDelete(key: string, key_hash: number, obj: KVStore) {
     });
 }
 
+function sleepProcessRead(key: string, key_hash: number, obj: KVStore) {
+    return new Promise<object>(function (resolve, reject) {
+        setTimeout(() => {
+            readGivenData(key, key_hash, obj)
+                .then((res: any) => resolve(res))
+                .catch((err: any) => reject(err));
+        }, 5 * 1000);
+    });
+}
+
 export function createNewData(key: string, key_hash: number, value: object, seconds: number | undefined, obj: KVStore) {
     let file_p = path.join(obj.file_path, obj.name, `${key_hash}.json`);
     return new Promise<object>(function (resolve, reject) {
@@ -110,6 +120,41 @@ export function deleteOldData(key: string, key_hash: number, obj: KVStore) {
                 if (e.code == "ELOCKED") {
                     //Putting the currect operation to sleep as another operation is working on the same file.
                     sleepProcessDelete(key, key_hash, obj)
+                        .then(res => resolve(res))
+                        .catch(err => reject(err));
+                } else {
+                    //rejecting the promise due to error
+                    reject(e);
+                }
+            });
+    });
+}
+
+export function readGivenData(key: string, key_hash: number, obj: KVStore) {
+    let file_p = path.join(obj.file_path, obj.name, `${key_hash}.json`);
+    return new Promise<object>(function (resolve, reject) {
+        lockfile
+            .lock(file_p)
+            .then((release: any) => {
+                let file_obj: any;
+                try {
+                    file_obj = JSON.parse(fs.readFileSync(file_p, "utf8"));
+                } catch (err) {
+                    reject(err);
+                }
+                if (file_obj.hasOwnProperty(key)) {
+                    //returning the data
+                    resolve({ status: "Success", data: file_obj[key] });
+                } else {
+                    //returning appropriate promise
+                    reject({ status: "Error", msg: "Key doesn't exist" });
+                }
+                return release();
+            })
+            .catch((e: any) => {
+                if (e.code == "ELOCKED") {
+                    //Putting the currect operation to sleep as another operation is working on the same file.
+                    sleepProcessRead(key, key_hash, obj)
                         .then(res => resolve(res))
                         .catch(err => reject(err));
                 } else {

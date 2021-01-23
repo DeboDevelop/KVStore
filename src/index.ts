@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { checkingDir, creatingDir, createFiles } = require("./bootstrap");
 const { keyHash, check, checkKey } = require("./util");
-const { createNewData, deleteOldData } = require("./file");
+const { createNewData, deleteOldData, readGivenData } = require("./file");
 
 class KVStore {
     name: string;
@@ -27,6 +27,17 @@ class KVStore {
         } else {
             let key_hash = keyHash(key);
             return createNewData(key, key_hash, value, seconds, this);
+        }
+    }
+    readData(key: string) {
+        let return_value: any = checkKey(key);
+        if (return_value.status === "Error") {
+            return new Promise(function (resolve, reject) {
+                reject(return_value);
+            });
+        } else {
+            let key_hash = keyHash(key);
+            return readGivenData(key, key_hash, this);
         }
     }
     deleteData(key: string) {

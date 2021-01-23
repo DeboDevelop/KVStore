@@ -1,6 +1,6 @@
 "use strict";
 exports.__esModule = true;
-exports.deleteOldData = exports.createNewData = void 0;
+exports.readGivenData = exports.deleteOldData = exports.createNewData = void 0;
 var fs = require("fs");
 var path = require("path");
 var lockfile = require("proper-lockfile");
@@ -17,6 +17,14 @@ function sleepProcessDelete(key, key_hash, obj) {
     return new Promise(function (resolve, reject) {
         setTimeout(function () {
             deleteOldData(key, key_hash, obj)
+                .then(function (res) { return resolve(res); })["catch"](function (err) { return reject(err); });
+        }, 5 * 1000);
+    });
+}
+function sleepProcessRead(key, key_hash, obj) {
+    return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+            readGivenData(key, key_hash, obj)
                 .then(function (res) { return resolve(res); })["catch"](function (err) { return reject(err); });
         }, 5 * 1000);
     });
@@ -111,3 +119,39 @@ function deleteOldData(key, key_hash, obj) {
     });
 }
 exports.deleteOldData = deleteOldData;
+function readGivenData(key, key_hash, obj) {
+    var file_p = path.join(obj.file_path, obj.name, key_hash + ".json");
+    return new Promise(function (resolve, reject) {
+        lockfile
+            .lock(file_p)
+            .then(function (release) {
+            var file_obj;
+            try {
+                file_obj = JSON.parse(fs.readFileSync(file_p, "utf8"));
+            }
+            catch (err) {
+                reject(err);
+            }
+            if (file_obj.hasOwnProperty(key)) {
+                //returning the data
+                resolve({ status: "Success", data: file_obj[key] });
+            }
+            else {
+                //returning appropriate promise
+                reject({ status: "Error", msg: "Key doesn't exist" });
+            }
+            return release();
+        })["catch"](function (e) {
+            if (e.code == "ELOCKED") {
+                //Putting the currect operation to sleep as another operation is working on the same file.
+                sleepProcessRead(key, key_hash, obj)
+                    .then(function (res) { return resolve(res); })["catch"](function (err) { return reject(err); });
+            }
+            else {
+                //rejecting the promise due to error
+                reject(e);
+            }
+        });
+    });
+}
+exports.readGivenData = readGivenData;
