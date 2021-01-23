@@ -27,7 +27,7 @@ function checkSize(size: number): object {
     }
 }
 
-function checkKey(key: string): object {
+export function checkKey(key: string): object {
     if (typeof key !== "string") {
         return { status: "Error", msg: "Key have to be String" };
     } else if (key.length > 32) {

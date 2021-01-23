@@ -1,6 +1,6 @@
 "use strict";
 exports.__esModule = true;
-exports.check = exports.keyHash = void 0;
+exports.checkKey = exports.check = exports.keyHash = void 0;
 function keyHash(key) {
     var hash = 0;
     for (var i = 1; i < key.length; i *= 2) {
@@ -41,6 +41,7 @@ function checkKey(key) {
         return { status: "Success" };
     }
 }
+exports.checkKey = checkKey;
 function checkValue(value) {
     if (value === null) {
         return { status: "Error", msg: "Value is Null" };

@@ -1,8 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 const { checkingDir, creatingDir, createFiles } = require("./bootstrap");
-const { keyHash, check } = require("./util");
-const { createNewData } = require("./file");
+const { keyHash, check, checkKey } = require("./util");
+const { createNewData, deleteOldData } = require("./file");
 
 class KVStore {
     name: string;
@@ -26,12 +26,18 @@ class KVStore {
             });
         } else {
             let key_hash = keyHash(key);
-            let curr_obj = this;
+            return createNewData(key, key_hash, value, seconds, this);
+        }
+    }
+    deleteData(key: string) {
+        let return_value: any = checkKey(key);
+        if (return_value.status === "Error") {
             return new Promise(function (resolve, reject) {
-                createNewData(key, key_hash, value, seconds, curr_obj)
-                    .then((res: any) => resolve(res))
-                    .catch((err: any) => reject(err));
+                reject(return_value);
             });
+        } else {
+            let key_hash = keyHash(key);
+            return deleteOldData(key, key_hash, this);
         }
     }
 }
